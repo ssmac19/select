@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>cards</title>
+  <link rel="stylesheet" href="cards.css">
+</head>
+<body>
+
+  <main id="grid" class="cards"></main>
+
+  <!-- Hidden main Vimeo player (used for fullscreen with sound) -->
+  <div aria-hidden="true" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0">
+    <iframe
+      id="mainPlayer"
+      src="https://player.vimeo.com/video/0?autoplay=0&controls=1&playsinline=1&dnt=1"
+      allow="autoplay; fullscreen; picture-in-picture"
+      style="width:1px;height:1px;border:0"></iframe>
+  </div>
+
+  <script src="https://player.vimeo.com/api/player.js"></script>
+  <script>
+    // 1) Render cards from cards.json
+    async function loadCards(){
+      const res = await fetch('cards.json');
+      const list = await res.json();
+      const grid = document.getElementById('grid');
+
+      list.forEach(c => {
+        const ar = (c.aspect || '16/9').replace('/', ' / ');
+        const el = document.createElement('article');
+        el.className = 'card';
+        el.style.setProperty('--span', c.span || 6);
+        el.style.setProperty('--ar', ar);
+        el.dataset.tags = (c.tags || []).join(',');
+
+        const hover = c.hoverImg ? `<img class="hover-img" src="${c.hoverImg}" alt="">` : '';
+
+        el.innerHTML = `
+          <div class="thumb">
+            <iframe data-thumb
+              src="https://player.vimeo.com/video/${c.vimeoThumbId}?background=1&muted=1&autoplay=1&loop=1&playsinline=1&controls=0&dnt=1&autopause=0"
+              loading="lazy" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+
+            ${hover}
+
+            <button type="button" class="overlay" aria-label="Play video: ${c.title}"
+                    data-vimeo="${c.vimeoFullId}" data-start="${c.start || 0}">
+              <!-- add play icon if you want -->
+            </button>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+    }
+
+    // 2) Fullscreen player logic (one hidden player)
+    const mainPlayer = new Vimeo.Player(document.getElementById('mainPlayer'));
+
+    // Collect thumbnail players to pause/resume
+    let thumbPlayers = [];
+    function collectThumbs(){
+      thumbPlayers = Array.from(document.querySelectorAll('iframe[data-thumb]'))
+        .map(el => new Vimeo.Player(el));
+    }
+    function pauseThumbs(){ thumbPlayers.forEach(p => p.pause().catch(()=>{})); }
+    function playThumbs(){  thumbPlayers.forEach(p => { p.setMuted(true); p.play().catch(()=>{}); }); }
+
+    // Click any .overlay to open fullscreen with sound
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.overlay[data-vimeo]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-vimeo');
+      const start = parseFloat(btn.getAttribute('data-start') || '0');
+
+      pauseThumbs();
+      try {
+        await mainPlayer.loadVideo(id);
+        await mainPlayer.setMuted(false);
+        if (start) { try { await mainPlayer.setCurrentTime(start); } catch {} }
+        await mainPlayer.play();
+        try { await mainPlayer.requestFullscreen(); } catch {}
+      } catch (err) { console.error('Vimeo error', err); }
+    });
+
+    // Resume loops when leaving fullscreen
+    ['fullscreenchange','webkitfullscreenchange'].forEach(evt=>{
+      document.addEventListener(evt, ()=>{
+        const fs = document.fullscreenElement || document.webkitFullscreenElement;
+        if (!fs) playThumbs();
+      });
+    });
+
+    // Boot
+    loadCards().then(() => collectThumbs());
+  </script>
+</body>
+</html>
