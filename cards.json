@@ -1,0 +1,12 @@
+[
+  {
+    "id": "tods-talkin",
+    "title": "Tod’s Talkin",
+    "vimeoThumbId": "1128098007",          // looping background preview
+    "vimeoFullId": "1126497830",           // plays fullscreen with sound
+    "aspect": "16/9",
+    "span": 6,
+    "hoverImg": "sportsthumb_gUvKC1zoD0Pdlu7.png",
+    "tags": ["sports","portfolio"]
+  }
+]

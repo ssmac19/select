@@ -1,0 +1,26 @@
+/* Grid */
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(12, 1fr); }
+.card  { grid-column: span var(--span, 6); }
+
+/* Thumb */
+.thumb { position: relative; width: 100%; aspect-ratio: var(--ar, 16/9);
+         overflow: hidden; border-radius: 12px; }
+.thumb > iframe,
+.thumb > img { position: absolute; inset: 0; width: 100%; height: 100%;
+               border: 0; object-fit: cover; }
+
+/* Hover image fade */
+.thumb .hover-img { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.thumb:hover .hover-img,
+.thumb:has(.overlay:focus-visible) .hover-img { opacity: 1; }
+
+/* Click overlay */
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+           background: transparent; border: 0; cursor: pointer; min-height: 44px; }
+
+/* Dialog-free fullscreen helper doesn’t need styles, but keep focus rings visible */
+.overlay:focus-visible { outline: 2px solid #66aaff; outline-offset: 2px; }
+
+/* Responsive */
+@media (max-width: 991px){ .card { --span: 6; } }
+@media (max-width: 767px){ .card { --span: 12; } }
